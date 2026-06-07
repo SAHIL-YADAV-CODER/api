@@ -1,19 +1,17 @@
 services:
   - type: web
-    name: forcesub-bot
+    name: forcesub-api
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
-      - key: BOT_TOKEN
-        value: 8915358086:AAELvKimuQQLc9GfO7pSp-dv2eD7cEfZeRw
       - key: TURSO_URL
         value: libsql://escrow-escrow.aws-ap-south-1.turso.io
       - key: TURSO_TOKEN
         value: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAzMzQ1NjEsImlkIjoiMDE5ZTg0MzQtYWUwMS03NWJmLTgyZTMtNTZiODBhNGVhMTBkIiwicmlkIjoiMDY2NzJhNDMtNjNiYy00YTg3LWFkZDEtZDIyNmMyZDJlNTc3In0.qVH0T7oJ_ZO7xDnC48LwBqGM-0C7edjuKS3sf_0jT2oySiaVgxKSlO0UiIHwiZFD-sf94anNbBrHeCNtJfo7Cw
-      - key: ADMIN_IDS
-        value: "YOUR_TELEGRAM_USER_ID"      # <-- replace with your Telegram numeric ID
+      - key: API_SECRET
+        value: "your_strong_secret_here"     # CHANGE THIS
       - key: RENDER_URL
-        value: "https://forcesub-bot.onrender.com"  # <-- replace with your actual Render URL
+        value: "https://forcesub-api.onrender.com"  # replace with your actual URL
       - key: PORT
         value: "5000"

@@ -1,96 +1,101 @@
-# 🔒 ForceSub Bot + API
+# 🔒 ForceSub Channel API
 
-A Telegram Force-Subscribe bot with a REST API, persistent Turso (libSQL) storage,
-Render webhook deployment, and auto-ping to keep the free tier alive.
+A **pure REST API** — no bot token, no Telegram polling.
+It only stores/retrieves channels in Turso DB.
+Your **Telebot Creator (TPY) bot** handles all Telegram logic.
 
 ---
 
 ## 🚀 Deploy to Render
 
-### Step 1 — Push to GitHub
-```bash
-git init
-git add .
-git commit -m "init"
-git remote add origin https://github.com/YOUR_USERNAME/forcesub-bot.git
-git push -u origin main
-```
+1. Push this folder to GitHub
+2. Render → New Web Service → connect repo
+3. Build: `pip install -r requirements.txt`
+4. Start: `python main.py`
+5. Set environment variables (see below)
 
-### Step 2 — Create Render Web Service
-1. Go to https://dashboard.render.com → **New → Web Service**
-2. Connect your GitHub repo
-3. Set **Runtime** = Python 3
-4. **Build Command**: `pip install -r requirements.txt`
-5. **Start Command**: `python main.py`
-
-### Step 3 — Environment Variables (in Render Dashboard)
+### Environment Variables
 | Key | Value |
 |-----|-------|
-| `BOT_TOKEN` | Your bot token |
-| `TURSO_URL` | Your Turso DB URL |
-| `TURSO_TOKEN` | Your Turso auth token |
-| `ADMIN_IDS` | Your Telegram user ID (get from @userinfobot) |
-| `RENDER_URL` | `https://YOUR-APP-NAME.onrender.com` |
+| `TURSO_URL` | Already set in render.yaml |
+| `TURSO_TOKEN` | Already set in render.yaml |
+| `API_SECRET` | A strong password YOU choose (used to protect add/remove) |
+| `RENDER_URL` | Your actual Render URL e.g. `https://forcesub-api.onrender.com` |
 | `PORT` | `5000` |
 
-### Step 4 — Make bot admin in your channel
-Add your bot as **admin** in the private channel so it can read member status.
-
 ---
 
-## 📡 API Endpoints (for Telebot Creator / TPY)
+## 📡 API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Health check |
-| GET | `/ping` | Auto-ping endpoint |
-| GET | `/api/check?user_id=123` | Check if user is verified |
-| GET | `/api/channels` | List all channels |
-| POST | `/api/addchn` | Add a channel (admin) |
-| POST | `/api/rmchn` | Remove a channel (admin) |
+### `GET /api/channels` — List all channels (no auth needed)
+TPY calls this to get the list of channels to check.
 
-### Example: Check user in TPY
-```
-URL: https://YOUR-APP.onrender.com/api/check?user_id={{user_id}}
-Method: GET
-```
-Response:
+**Response:**
 ```json
 {
-  "user_id": 123456789,
-  "verified": true,
-  "missing": [],
-  "channels": [{"url": "https://t.me/+xxx", "id": "-100..."}]
+  "success": true,
+  "count": 2,
+  "channels": [
+    { "url": "https://t.me/+AbCdEfGhIjK", "channel_id": "-1001234567890", "label": "Channel 1" },
+    { "url": "https://t.me/+XyZaBcDeFgH", "channel_id": "-1009876543210", "label": "Channel 2" }
+  ]
 }
 ```
-Use `verified` field in your TPY condition node.
 
 ---
 
-## 🤖 Bot Commands
+### `POST /api/addchn` — Add a channel (admin only)
+**Header:** `X-API-Secret: your_secret`
 
-### User Commands
-| Command | Description |
-|---------|-------------|
-| `/start` | Welcome message (gated) |
-| `/verify` | Check membership status |
-| `/help` | Show help |
+**Body:**
+```json
+{
+  "url": "https://t.me/+AbCdEfGhIjK",
+  "channel_id": "-1001234567890",
+  "label": "My VIP Channel"
+}
+```
 
-### Admin Commands
-| Command | Description |
-|---------|-------------|
-| `/addchn <url>` | Add a channel (private invite link) |
-| `/rmchn <url>` | Remove a channel |
-| `/listchn` | List all channels |
+> **How to get channel_id?**
+> Forward any message from your channel to @userinfobot — it shows the ID.
 
 ---
 
-## 🔗 How Force-Sub Works
-1. User starts bot or sends any message
-2. Bot checks if user is member of all registered channels
-3. If **not verified** → sends buttons with invite links + **Verify Me** button
-4. User taps channel link → sends **join request** (doesn't need to be accepted!)
-5. User taps **Verify Me** → bot rechecks → grants access ✅
+### `POST /api/rmchn` — Remove a channel (admin only)
+**Header:** `X-API-Secret: your_secret`
 
-> The bot verifies that a join **request was sent**, NOT that the user was accepted.
-> Admins still manually approve members in the channel.
+**Body:**
+```json
+{ "url": "https://t.me/+AbCdEfGhIjK" }
+```
+
+---
+
+## 🤖 TPY / Telebot Creator Setup
+
+### Step 1 — On /start or any command, fetch channels:
+```
+HTTP GET: https://your-api.onrender.com/api/channels
+```
+Store `channels` array in a variable.
+
+### Step 2 — For each channel, call getChatMember:
+```
+Telegram API: getChatMember
+  chat_id = {channel_id from array}
+  user_id = {user_id}
+```
+Check if `status` is NOT "left" or "kicked".
+
+### Step 3 — If not verified, send join buttons:
+Show each channel URL as an inline button + a "✅ Verify Me" callback button.
+
+### Step 4 — On "Verify Me" callback:
+Re-run Step 2. If all passed → proceed. Else → show join prompt again.
+
+---
+
+## 🔐 Security
+- `GET /api/channels` is public (TPY needs it without auth)
+- `POST /api/addchn` and `POST /api/rmchn` require `X-API-Secret` header
+- Set a strong `API_SECRET` in Render env vars
