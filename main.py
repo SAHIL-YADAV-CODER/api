@@ -17,7 +17,7 @@ BOT_TOKEN   = os.environ.get("BOT_TOKEN", "8915358086:AAELvKimuQQLc9GfO7pSp-dv2e
 TURSO_URL   = os.environ.get("TURSO_URL",  "libsql://escrow-escrow.aws-ap-south-1.turso.io")
 TURSO_TOKEN = os.environ.get("TURSO_TOKEN", "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODAzMzQ1NjEsImlkIjoiMDE5ZTg0MzQtYWUwMS03NWJmLTgyZTMtNTZiODBhNGVhMTBkIiwicmlkIjoiMDY2NzJhNDMtNjNiYy00YTg3LWFkZDEtZDIyNmMyZDJlNTc3In0.qVH0T7oJ_ZO7xDnC48LwBqGM-0C7edjuKS3sf_0jT2oySiaVgxKSlO0UiIHwiZFD-sf94anNbBrHeCNtJfo7Cw")
 ADMIN_IDS   = [int(x) for x in os.environ.get("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
-RENDER_URL  = os.environ.get("RENDER_URL", "")   # e.g. https://yourapp.onrender.com
+RENDER_URL  = os.environ.get("RENDER_URL", "https://api-ccit.onrender.com")   # e.g. https://yourapp.onrender.com
 PORT        = int(os.environ.get("PORT", 5000))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
